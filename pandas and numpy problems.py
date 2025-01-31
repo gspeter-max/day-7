@@ -63,7 +63,46 @@ def compute_roling(group):
 df['vwap'] = df.groupby('symbol', group_keys = False).apply(compute_roling).reset_index(drop = True )
 
 print(df)
-\
+
+'''
+Problem 2: NumPy – Custom Multi-Dimensional Tensor Operations
+Problem Statement:
+You are given a 4D tensor stored in a NumPy array X of shape (B, C, H, W), representing a batch of images:
+
+B: Number of images in the batch (batch size).
+C: Number of channels (e.g., RGB → 3 channels).
+H: Height of the image.
+W: Width of the image.
+You need to perform the following operations efficiently (without explicit loops for large tensors):
+
+Compute the per-channel mean and standard deviation across the entire batch and normalize each channel independently (standardization).
+Apply a Gaussian blur filter of kernel size (3,3), but only on the first half of the images in the batch (X[:B//2]), while keeping the other half unchanged.
+Rotate each image by 90° clockwise, but only for images where the sum of pixel intensities in the first channel (X[:,0,:,:]) is greater than the median sum across the batch.
+Flatten the final result back to shape (B, -1) for further processing.
+'''
 
 
+
+
+import numpy as np
+
+from scipy.ndimage import gaussian_filter 
+# Set parameters
+B, C, H, W = 128, 3, 64, 64  # Batch size, Channels, Height, Width
+
+# Generate random image data (pixel values between 0 and 255)
+x = np.random.randint(0, 256, (B, C, H, W), dtype=np.uint8)
+
+channels_means = x.mean(axis = (0,2,3), keepdims  = True).round(2)
+channels_std = x.std(axis = (0,2,3), keepdims = True).round(2)  
+x_standardized = ((x - channels_means)/ (channels_std + 1e-8))
+
+x[:B//2] = gaussian_filter(x[:B//2],sigma = (0,0,1,1))
+    
+filters_sum = x[:,0,:,:].sum(axis = (1,2))
+filters_median  = np.median(filters_sum)
+filter_index = filters_sum > filters_median
+x[filter_index] = np.rot90(x[filter_index], k =-1,axes = (2,3))
+reshaped = x.reshape(B,-1)
+print(reshaped)
 
